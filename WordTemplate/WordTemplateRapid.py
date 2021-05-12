@@ -1,8 +1,8 @@
+import os
+from pathlib import Path
 import shutil
 from docxtpl import DocxTemplate
-from pathlib import Path
 import configparser
-import os
 from docxcompose.composer import Composer
 from docx import Document as Document_compose
 import openpyxl, openpyxl.utils

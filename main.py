@@ -20,14 +20,16 @@ class ExampleApp(QtWidgets.QMainWindow, gui.Ui_MainWindow):
         self.comboBox_2.addItems(user_list)
 
     def browse_folder(self):
-        # self.listWidget.clear()  # На случай, если в списке уже есть элементы
-        directory = QtWidgets.QFileDialog.getExistingDirectory(self, "Выберите папку")
+        #self.listWidget.clear()  # На случай, если в списке уже есть элементы
+        #directory = QtWidgets.QFileDialog.getExistingDirectory(self, "Выберите папку")
+        file_name = QtWidgets.QFileDialog.getOpenFileName(self, "Выбор картинки", None, "words (*.doc *.docx)")[0]
+        print(file_name)
         # открыть диалог выбора директории и установить значение переменной
         # равной пути к выбранной директории
-
-        if directory:  # не продолжать выполнение, если пользователь не выбрал директорию
-            for file_name in os.listdir(directory):  # для каждого файла в директории
-                self.listWidget.addItem(file_name)  # добавить файл в listWidget
+        #print(directory)
+        # if directory:  # не продолжать выполнение, если пользователь не выбрал директорию
+        #     for file_name in os.listdir(directory):  # для каждого файла в директории
+        #         self.listWidget.addItem(file_name)  # добавить файл в listWidget
 
     def start_generation(self):
         # --- radio button --- #
