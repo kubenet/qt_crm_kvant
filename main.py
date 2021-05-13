@@ -1,5 +1,5 @@
 import sys  # sys нужен для передачи argv в QApplication
-import os  # Отсюда нам понадобятся методы для отображения содержимого директорий
+import os   # Отсюда нам понадобятся методы для отображения содержимого директорий
 
 from PyQt5 import QtWidgets
 import gui  # Это наш конвертированный файл дизайна
@@ -18,15 +18,17 @@ class ExampleApp(QtWidgets.QMainWindow, gui.Ui_MainWindow):
         self.pushButton.clicked.connect(self.browse_folder)  # Выполнить функцию browse_folder
         self.comboBox.addItems(templates)
         self.comboBox_2.addItems(user_list)
+        self.dateEdit.setCalendarPopup(True)
+        self.dateEdit_2.setCalendarPopup(True)
 
     def browse_folder(self):
-        #self.listWidget.clear()  # На случай, если в списке уже есть элементы
-        #directory = QtWidgets.QFileDialog.getExistingDirectory(self, "Выберите папку")
-        file_name = QtWidgets.QFileDialog.getOpenFileName(self, "Выбор картинки", None, "words (*.doc *.docx)")[0]
+        # self.listWidget.clear()  # На случай, если в списке уже есть элементы
+        # directory = QtWidgets.QFileDialog.getExistingDirectory(self, "Выберите папку")
+        file_name = QtWidgets.QFileDialog.getOpenFileName(self, "Выбор шаблона", None, "word (*.doc *.docx)")[0]
         print(file_name)
         # открыть диалог выбора директории и установить значение переменной
         # равной пути к выбранной директории
-        #print(directory)
+        # print(directory)
         # if directory:  # не продолжать выполнение, если пользователь не выбрал директорию
         #     for file_name in os.listdir(directory):  # для каждого файла в директории
         #         self.listWidget.addItem(file_name)  # добавить файл в listWidget
@@ -34,18 +36,18 @@ class ExampleApp(QtWidgets.QMainWindow, gui.Ui_MainWindow):
     def start_generation(self):
         # --- radio button --- #
         if self.radioButton.isChecked():
-            print('RadioButton')
-        if self.radioButton_2.isChecked():
-            print('RadioButton_2')
-        if self.radioButton_3.isChecked():
-            print('RadioButton_3')
+            print('Базовая группа')
+        elif self.radioButton_2.isChecked():
+            print('Проектная группа')
+        elif self.radioButton_3.isChecked():
+            print('Свой шаблон')
         # --- checkBox --- #
         if self.checkBox.isChecked():
-            print('checkBox')
-        elif self.checkBox_2.isChecked():
-            print('checkBox_2')
-        elif self.checkBox_3.isChecked():
-            print('checkBox_3')
+            print('Сохранить в PDF')
+        if self.checkBox_2.isChecked():
+            print('Сохранить в один файл')
+        if self.checkBox_3.isChecked():
+            print('Дата начала и окончания')
         # --- date --- #
         date1 = self.dateEdit.date()
         date2 = self.dateEdit_2.date()
