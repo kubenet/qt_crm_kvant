@@ -1,8 +1,15 @@
 import sys  # sys нужен для передачи argv в QApplication
-import os   # Отсюда нам понадобятся методы для отображения содержимого директорий
+import os  # Отсюда нам понадобятся методы для отображения содержимого директорий
 
 from PyQt5 import QtWidgets
 import gui  # Это наш конвертированный файл дизайна
+import generate_docx as gen
+import shutil
+from pathlib import Path
+
+import openpyxl
+import openpyxl.utils
+from docxtpl import DocxTemplate
 
 templates = os.listdir('learn_templates')
 user_list = os.listdir('user_lists')
@@ -10,8 +17,7 @@ user_list = os.listdir('user_lists')
 
 class ExampleApp(QtWidgets.QMainWindow, gui.Ui_MainWindow):
     def __init__(self):
-        # Это здесь нужно для доступа к переменным, методам
-        # и т.д. в файле design.py
+        # Это здесь нужно для доступа к переменным, методам и т.д. в файле design.py
         super().__init__()
         self.setupUi(self)  # Это нужно для инициализации нашего дизайна
         self.pushButton_2.clicked.connect(self.start_generation)  # Выполнить функцию start_generation
@@ -20,6 +26,7 @@ class ExampleApp(QtWidgets.QMainWindow, gui.Ui_MainWindow):
         self.comboBox_2.addItems(user_list)
         self.dateEdit.setCalendarPopup(True)
         self.dateEdit_2.setCalendarPopup(True)
+        self.progressBar.setValue(0)
 
     def browse_folder(self):
         # self.listWidget.clear()  # На случай, если в списке уже есть элементы
@@ -34,6 +41,8 @@ class ExampleApp(QtWidgets.QMainWindow, gui.Ui_MainWindow):
         #         self.listWidget.addItem(file_name)  # добавить файл в listWidget
 
     def start_generation(self):
+        template = str(self.comboBox.currentText())
+        group_list = str(self.comboBox_2.currentText())
         # --- radio button --- #
         if self.radioButton.isChecked():
             print('Базовая группа')
@@ -49,9 +58,42 @@ class ExampleApp(QtWidgets.QMainWindow, gui.Ui_MainWindow):
         if self.checkBox_3.isChecked():
             print('Дата начала и окончания')
         # --- date --- #
-        date1 = self.dateEdit.date()
-        date2 = self.dateEdit_2.date()
-        print('c {} по {}'.format(date1.toString('dd.MM.yyyy'), date2.toString('dd.MM.yyyy')))
+        date1 = self.dateEdit.date().toString('dd.MM.yyyy')
+        date2 = self.dateEdit_2.date().toString('dd.MM.yyyy')
+        # gen.generate_documents(template, group_list, date1, date2)
+
+        lists_path = Path('user_lists')
+        pattern_path = Path('learn_templates')
+        shutil.rmtree("diplomas", ignore_errors=True)
+        os.mkdir("diplomas")
+        print(template, group_list, date1, date2)
+        i = 0
+        loading = 0
+        context = {}
+        wb = openpyxl.load_workbook(lists_path / group_list)
+        sheet = wb.active
+        rows = sheet.max_row
+        step = 100/rows
+        learn_program = sheet.cell(row=1, column=1).value
+        pattern_name = template
+        doc = DocxTemplate(pattern_path / pattern_name)
+        for row_num in range(2, rows + 1):
+            line = sheet.cell(row=row_num, column=1).value + ' ' + \
+                   sheet.cell(row=row_num, column=2).value + ' ' + \
+                   sheet.cell(row=row_num, column=3).value
+            loading += step
+            print(loading)
+            context['fio'] = line
+            context['date1'] = date1
+            context['date2'] = date2
+            context['kvant'] = str(learn_program)
+            doc.render(context)
+            name_document = str(i) + "_" + str(sheet.cell(row=row_num, column=1).value) + ".docx"
+            doc.save(name_document)
+            shutil.move(name_document, "diplomas")
+            i += 1
+            self.progressBar.setValue(int(loading))
+        self.progressBar.setValue(100)
 
 
 def main():
