@@ -129,4 +129,4 @@ class Ui_MainWindow(object):
         self.label.setText(_translate("MainWindow", "Группа"))
         self.label_2.setText(_translate("MainWindow", "Список ФИО"))
         self.menu.setTitle(_translate("MainWindow", "&Справка"))
-        self.menu_2.setTitle(_translate("MainWindow", "&Выход"))
+        self.menu_2.setTitle(_translate("MainWindow", "&Меню"))
