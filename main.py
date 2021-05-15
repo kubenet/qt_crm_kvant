@@ -7,17 +7,80 @@ from PyQt5.QtWidgets import QAction
 import gui  # Это наш конвертированный файл дизайна
 import shutil
 from pathlib import Path
-from docx2pdf import convert
+import comtypes.client
+import win32com.client
 import openpyxl
 import openpyxl.utils
 from docxtpl import DocxTemplate
 
 templates = os.listdir('learn_templates')
 user_list = os.listdir('user_lists')
+wdFormatPDF = 17
 
 
-def view_diplomas(self):
+def view_diplomas():
     os.system('explorer.exe "diplomas"')
+
+
+def doc2pdf():
+    """Convert a Word .docx to PDF"""
+
+    print(os.listdir("diplomas"))
+    docx_list = os.listdir("diplomas")
+    os.chdir("diplomas")
+    print(os.getcwd())
+    i = 0
+    word = comtypes.client.CreateObject('Word.Application')
+    for document in docx_list:
+        print(document)
+        doc = word.Documents.Open(os.path.abspath(document))
+        doc.SaveAs(os.getcwd() + '\\' + document + str(i) + '.pdf', FileFormat=wdFormatPDF)
+        doc.Close()
+        i += 1
+    word.Quit()
+
+
+def list_doc2pdf():  # "D:\\prj\\python_prj\\crn\\WordProgram\\diplomas"
+    for root, dirs, files in os.walk(os.getcwd() + "\\diplomas"):
+        for f in files:
+            if f.endswith(".doc") or f.endswith(".odt") or f.endswith(".rtf"):
+                try:
+                    print(f)
+                    in_file = os.path.join(root, f)
+                    word = win32com.client.Dispatch('Word.Application')
+                    word.Visible = False
+                    doc = word.Documents.Open(in_file)
+                    doc.SaveAs(os.path.join(root, f[:-4]), FileFormat=wdFormatPDF)
+                    doc.Close()
+                    word.Quit()
+                    word.Visible = True
+                    print('done')
+                    # os.remove(os.path.join(root,f))
+                    pass
+                except:
+                    pass
+                    # print('could not open')
+                    # os.remove(os.path.join(root,f))
+            elif f.endswith(".docx") or f.endswith(".dotm") or f.endswith(".docm"):
+                try:
+                    print(f)
+                    in_file = os.path.join(root, f)
+                    word = win32com.client.Dispatch('Word.Application')
+                    word.Visible = False
+                    doc = word.Documents.Open(in_file)
+                    doc.SaveAs(os.path.join(root, f[:-5]), FileFormat=wdFormatPDF)
+                    doc.Close()
+                    word.Quit()
+                    word.Visible = True
+                    print('done')
+                    # os.remove(os.path.join(root,f))
+                    pass
+                except:
+                    pass
+                    # print('could not open')
+                    # os.remove(os.path.join(root,f))
+            else:
+                pass
 
 
 class ExampleApp(QtWidgets.QMainWindow, gui.Ui_MainWindow):
@@ -25,21 +88,28 @@ class ExampleApp(QtWidgets.QMainWindow, gui.Ui_MainWindow):
         # Это здесь нужно для доступа к переменным, методам и т.д. в файле design.py
         super().__init__()
         self.setupUi(self)  # Это нужно для инициализации нашего дизайна
-        self.pushButton_2.clicked.connect(self.start_generation)    # Выполнить функцию start_generation
-        self.pushButton.clicked.connect(self.browse_folder)         # Выполнить функцию browse_folder
-        self.pushButton_3.clicked.connect(view_diplomas)    # связь кнопки открыть папку с результатом (дипломами)
-        self.comboBox.addItems(templates)       # заполнение comboBox списком файлов шаблонов
-        self.comboBox_2.addItems(user_list)     # заполнение comboBox списком файлов групп
-        self.dateEdit.setCalendarPopup(True)    # настройка даты опция выпадающего календаря
-        self.dateEdit.setDateTime(QtCore.QDateTime.currentDateTime())       # устанавливаем текущую дату
-        self.dateEdit_2.setDateTime(QtCore.QDateTime.currentDateTime())     # устанавливаем текущую дату
+        self.pushButton_2.clicked.connect(self.start_generation)  # Выполнить функцию start_generation
+        self.pushButton.clicked.connect(self.browse_folder)  # Выполнить функцию browse_folder
+        self.pushButton_3.clicked.connect(self.view_diplomas)  # связь кнопки открыть папку с результатом (дипломами)
+        self.comboBox.addItems(templates)  # заполнение comboBox списком файлов шаблонов
+        self.comboBox_2.addItems(user_list)  # заполнение comboBox списком файлов групп
+        self.dateEdit.setCalendarPopup(True)  # настройка даты опция выпадающего календаря
+        self.dateEdit.setDateTime(QtCore.QDateTime.currentDateTime())  # устанавливаем текущую дату
+        self.dateEdit_2.setDateTime(QtCore.QDateTime.currentDateTime())  # устанавливаем текущую дату
         self.dateEdit_2.setCalendarPopup(True)  # настройка даты опция выпадающего календаря
-        self.progressBar.setValue(0)            # настройка первоначального значения progressBar
-        self.menu.setEnabled(False)             # неактивный пункт меню "Справка"
-        self.action = QAction("Выход")          # создание нового пункта меню
-        self.menu_2.addAction(self.action)      # добавление в меню пункт "Выход"
-        self.action.triggered.connect(self.close)   # кнопка закрытия приложения
-        self.checkBox.setChecked(True)              # по умолчанию конвертация в pdf включена
+        self.progressBar.setValue(0)  # настройка первоначального значения progressBar
+        self.menu.setEnabled(False)  # неактивный пункт меню "Справка"
+        self.action = QAction("Выход")  # создание нового пункта меню
+        self.menu_2.addAction(self.action)  # добавление в меню пункт "Выход"
+        self.action.triggered.connect(self.close)  # кнопка закрытия приложения
+        self.checkBox.setChecked(True)  # по умолчанию конвертация в pdf включена
+
+    def view_diplomas(self):
+        # lists_path = Path('diplomas')
+        # print(lists_path)
+        # list_doc2pdf()
+        doc2pdf()
+        # os.system('explorer.exe "diplomas"')
 
     def browse_folder(self):
         file_name = QtWidgets.QFileDialog.getOpenFileName(self, "Выбор шаблона", None, "word (*.doc *.docx)")[0]
@@ -67,14 +137,14 @@ class ExampleApp(QtWidgets.QMainWindow, gui.Ui_MainWindow):
         pattern_path = Path('learn_templates')
         shutil.rmtree("diplomas", ignore_errors=True)
         os.mkdir("diplomas")
-        i = 0   # счетчик для именования файлов
-        loading = 0     # значение для индикации загрузки
+        i = 0  # счетчик для именования файлов
+        loading = 0  # значение для индикации загрузки
         wb = openpyxl.load_workbook(lists_path / group_list)
         sheet = wb.active
         rows = sheet.max_row
-        step = 100 / rows   # вычисление шага преодразования одного документа для индикации
+        step = 100 / rows  # вычисление шага преодразования одного документа для индикации
         # (первая строка из документа Excel)
-        pattern_name = template     # название шаблона
+        pattern_name = template  # название шаблона
         doc = DocxTemplate(pattern_path / pattern_name)
         date1 = self.dateEdit.date().toString('dd.MM.yyyy')
         date2 = self.dateEdit_2.date().toString('dd.MM.yyyy')
@@ -84,9 +154,9 @@ class ExampleApp(QtWidgets.QMainWindow, gui.Ui_MainWindow):
                    sheet.cell(row=row_num, column=3).value
             context['fio'] = line
             context['kvant'] = str(sheet.cell(row=1, column=1).value)  # название учебной программы
-            context['date1'] = date1    # дата начала обучения по программе
-            context['date2'] = date2    # дата окончания обучения по программе
-            context['duration'] = str(72)   # в объеме 72 часов
+            context['date1'] = date1  # дата начала обучения по программе
+            context['date2'] = date2  # дата окончания обучения по программе
+            context['duration'] = str(72)  # в объеме 72 часов
             loading += step
             doc.render(context)
             name_document = str(i) + "_" + str(sheet.cell(row=row_num, column=1).value) + ".docx"
@@ -95,11 +165,11 @@ class ExampleApp(QtWidgets.QMainWindow, gui.Ui_MainWindow):
             i += 1
             self.progressBar.setValue(int(loading))
         self.progressBar.setValue(100)
-        if self.checkBox.isChecked():   # если выбран пункт сохранить в формате pdf,
-                                        # то все документы docx из папки diplomas переконвертируются в pdf
+        if self.checkBox.isChecked():  # если выбран пункт сохранить в формате pdf,
+            # то все документы docx из папки diplomas переконвертируются в pdf
             self.label_5.setText("Готовим PDF...")
-            convert("diplomas/")
-            self.label_5.setText("Свежие PDF готовы!)")
+            # convert("diplomas/")
+            # self.label_5.setText("Свежие PDF готовы!)")
 
 
 def main():
