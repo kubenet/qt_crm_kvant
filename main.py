@@ -5,6 +5,9 @@ from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import QAction
 
 import gui  # Это наш конвертированный файл дизайна
+import gui_v2  # Это наш конвертированный файл дизайна
+import gui_v3  # Это наш конвертированный файл дизайна
+
 import shutil
 from pathlib import Path
 import comtypes.client
@@ -30,14 +33,14 @@ def doc2pdf():
     os.chdir("diplomas")
     print(os.getcwd())
     i = 0
-    word = comtypes.client.CreateObject('Word.Application')
     for document in docx_list:
+        word = comtypes.client.CreateObject('Word.Application')
         print(document)
         doc = word.Documents.Open(os.path.abspath(document))
         doc.SaveAs(os.getcwd() + '\\' + document + str(i) + '.pdf', FileFormat=wdFormatPDF)
         doc.Close()
         i += 1
-    word.Quit()
+        word.Quit()
 
 
 def list_doc2pdf():  # "D:\\prj\\python_prj\\crn\\WordProgram\\diplomas"
@@ -83,7 +86,7 @@ def list_doc2pdf():  # "D:\\prj\\python_prj\\crn\\WordProgram\\diplomas"
                 pass
 
 
-class ExampleApp(QtWidgets.QMainWindow, gui.Ui_MainWindow):
+class ExampleApp(QtWidgets.QMainWindow, gui_v3.Ui_MainWindow):
     def __init__(self):
         # Это здесь нужно для доступа к переменным, методам и т.д. в файле design.py
         super().__init__()
@@ -148,23 +151,24 @@ class ExampleApp(QtWidgets.QMainWindow, gui.Ui_MainWindow):
         doc = DocxTemplate(pattern_path / pattern_name)
         date1 = self.dateEdit.date().toString('dd.MM.yyyy')
         date2 = self.dateEdit_2.date().toString('dd.MM.yyyy')
+        context['kvant'] = str(sheet.cell(row=1, column=1).value)  # название учебной программы
+        context['date1'] = date1  # дата начала обучения по программе
+        context['date2'] = date2  # дата окончания обучения по программе
+        context['duration'] = str(72)  # в объеме 72 часов
         for row_num in range(2, rows + 1):
-            line = sheet.cell(row=row_num, column=1).value + ' ' + \
-                   sheet.cell(row=row_num, column=2).value + ' ' + \
-                   sheet.cell(row=row_num, column=3).value
-            context['fio'] = line
-            context['kvant'] = str(sheet.cell(row=1, column=1).value)  # название учебной программы
-            context['date1'] = date1  # дата начала обучения по программе
-            context['date2'] = date2  # дата окончания обучения по программе
-            context['duration'] = str(72)  # в объеме 72 часов
+            fio = str(sheet.cell(row=row_num, column=1).value) + ' ' + str(sheet.cell(row=row_num, column=2).value) + ' ' + str(sheet.cell(row=row_num, column=3).value)
+            print(fio)
+            context['fio'] = fio
             loading += step
             doc.render(context)
-            name_document = str(i) + "_" + str(sheet.cell(row=row_num, column=1).value) + ".docx"
+            print(context)
+            name_document = fio + '_' + str(i) + ".docx"
             doc.save(name_document)
             shutil.move(name_document, "diplomas")
             i += 1
             self.progressBar.setValue(int(loading))
         self.progressBar.setValue(100)
+
         if self.checkBox.isChecked():  # если выбран пункт сохранить в формате pdf,
             # то все документы docx из папки diplomas переконвертируются в pdf
             self.label_5.setText("Готовим PDF...")
