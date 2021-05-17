@@ -4,9 +4,10 @@ import os  # Отсюда нам понадобятся методы для от
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import QAction
 
-import gui  # Это наш конвертированный файл дизайна
-import gui_v2  # Это наш конвертированный файл дизайна
-import gui_v3  # Это наш конвертированный файл дизайна
+# import gui  # Это наш конвертированный файл дизайна
+# import gui_v2  # Это наш конвертированный файл дизайна
+# import gui_v3  # Это наш конвертированный файл дизайна
+import gui4  # Это наш конвертированный файл дизайна
 
 import shutil
 from pathlib import Path
@@ -86,7 +87,7 @@ def list_doc2pdf():  # "D:\\prj\\python_prj\\crn\\WordProgram\\diplomas"
                 pass
 
 
-class ExampleApp(QtWidgets.QMainWindow, gui_v3.Ui_MainWindow):
+class ExampleApp(QtWidgets.QMainWindow, gui4.Ui_MainWindow):
     def __init__(self):
         # Это здесь нужно для доступа к переменным, методам и т.д. в файле design.py
         super().__init__()
@@ -119,7 +120,6 @@ class ExampleApp(QtWidgets.QMainWindow, gui_v3.Ui_MainWindow):
         self.label_5.setText(file_name)
 
     def start_generation(self):
-        context = {}
         template = str(self.comboBox.currentText())
         group_list = str(self.comboBox_2.currentText())
         # --- radio button --- #
@@ -148,18 +148,15 @@ class ExampleApp(QtWidgets.QMainWindow, gui_v3.Ui_MainWindow):
         step = 100 / rows  # вычисление шага преодразования одного документа для индикации
         # (первая строка из документа Excel)
         pattern_name = template  # название шаблона
-        doc = DocxTemplate(pattern_path / pattern_name)
         date1 = self.dateEdit.date().toString('dd.MM.yyyy')
         date2 = self.dateEdit_2.date().toString('dd.MM.yyyy')
-        context['kvant'] = str(sheet.cell(row=1, column=1).value)  # название учебной программы
-        context['date1'] = date1  # дата начала обучения по программе
-        context['date2'] = date2  # дата окончания обучения по программе
-        context['duration'] = str(72)  # в объеме 72 часов
         for row_num in range(2, rows + 1):
+            context = {'kvant': str(sheet.cell(row=1, column=1).value), 'date1': date1, 'date2': date2, 'duration': str(72)}
             fio = str(sheet.cell(row=row_num, column=1).value) + ' ' + str(sheet.cell(row=row_num, column=2).value) + ' ' + str(sheet.cell(row=row_num, column=3).value)
             print(fio)
-            context['fio'] = fio
+            context.setdefault('fio', fio)
             loading += step
+            doc = DocxTemplate(pattern_path / pattern_name)
             doc.render(context)
             print(context)
             name_document = fio + '_' + str(i) + ".docx"
