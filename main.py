@@ -148,17 +148,16 @@ class ExampleApp(QtWidgets.QMainWindow, gui4.Ui_MainWindow):
         step = 100 / rows  # вычисление шага преодразования одного документа для индикации
         # (первая строка из документа Excel)
         pattern_name = template  # название шаблона
-        date1 = self.dateEdit.date().toString('dd.MM.yyyy')
-        date2 = self.dateEdit_2.date().toString('dd.MM.yyyy')
+        date1 = self.dateEdit.date().toString('dd.MM.yyyy')     # дата начала
+        date2 = self.dateEdit_2.date().toString('dd.MM.yyyy')   # и окончания обучения
+        duration = self.lineEdit.text()     # продолжительнсть учебной программы
         for row_num in range(2, rows + 1):
-            context = {'kvant': str(sheet.cell(row=1, column=1).value), 'date1': date1, 'date2': date2, 'duration': str(72)}
+            context = {'kvant': str(sheet.cell(row=1, column=1).value), 'date1': date1, 'date2': date2, 'duration': duration}
             fio = str(sheet.cell(row=row_num, column=1).value) + ' ' + str(sheet.cell(row=row_num, column=2).value) + ' ' + str(sheet.cell(row=row_num, column=3).value)
-            print(fio)
             context.setdefault('fio', fio)
             loading += step
             doc = DocxTemplate(pattern_path / pattern_name)
             doc.render(context)
-            print(context)
             name_document = fio + '_' + str(i) + ".docx"
             doc.save(name_document)
             shutil.move(name_document, "diplomas")
