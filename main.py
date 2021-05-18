@@ -42,6 +42,7 @@ def doc2pdf():
         doc.Close()
         i += 1
         word.Quit()
+    os.chdir("..")
 
 
 def list_doc2pdf():  # "D:\\prj\\python_prj\\crn\\WordProgram\\diplomas"
@@ -94,7 +95,8 @@ class ExampleApp(QtWidgets.QMainWindow, gui4.Ui_MainWindow):
         self.setupUi(self)  # Это нужно для инициализации нашего дизайна
         self.pushButton_2.clicked.connect(self.start_generation)  # Выполнить функцию start_generation
         self.pushButton.clicked.connect(self.browse_folder)  # Выполнить функцию browse_folder
-        self.pushButton_3.clicked.connect(self.view_diplomas)  # связь кнопки открыть папку с результатом (дипломами)
+        self.pushButton_3.clicked.connect(view_diplomas)  # связь кнопки открыть папку с результатом (дипломами)
+        self.pushButton_4.clicked.connect(doc2pdf)
         self.comboBox.addItems(templates)  # заполнение comboBox списком файлов шаблонов
         self.comboBox_2.addItems(user_list)  # заполнение comboBox списком файлов групп
         self.dateEdit.setCalendarPopup(True)  # настройка даты опция выпадающего календаря
@@ -104,38 +106,75 @@ class ExampleApp(QtWidgets.QMainWindow, gui4.Ui_MainWindow):
         self.progressBar.setValue(0)  # настройка первоначального значения progressBar
         self.menu.setEnabled(False)  # неактивный пункт меню "Справка"
         self.action = QAction("Выход")  # создание нового пункта меню
+        self.action2 = QAction("Тест сертификата")  # создание одного сертификата для проверки шаблона и внешнего вида
+        self.menu_2.addAction(self.action2)  # добавление в меню пункт "Тест сертификата"
         self.menu_2.addAction(self.action)  # добавление в меню пункт "Выход"
+        self.action2.triggered.connect(self.test_diploma)  # кнопка генерации тестового диплома (одного экземпляра)
         self.action.triggered.connect(self.close)  # кнопка закрытия приложения
         self.checkBox.setChecked(True)  # по умолчанию конвертация в pdf включена
 
-    def view_diplomas(self):
-        # lists_path = Path('diplomas')
-        # print(lists_path)
-        # list_doc2pdf()
-        doc2pdf()
-        # os.system('explorer.exe "diplomas"')
+    def test_diploma(self):
+        self.label_5.setText("Готовим тестовый Docx...")
+        template = str(self.comboBox.currentText())
+        group_list = str(self.comboBox_2.currentText())
+        lists_path = Path('user_lists')
+        pattern_path = Path('learn_templates')
+        shutil.rmtree("diplomas", ignore_errors=True)
+        os.mkdir("diplomas")
+        wb = openpyxl.load_workbook(lists_path / group_list)
+        sheet = wb.active
+        pattern_name = template  # название шаблона
+        date1 = self.dateEdit_2.date().toString('dd.MM.yyyy')  # дата начала
+        date2 = self.dateEdit.date().toString('dd.MM.yyyy')  # и окончания обучения
+        duration = self.lineEdit.text()  # продолжительнсть учебной программы
+        context = {
+            'kvant': str(sheet.cell(row=1, column=1).value),
+            'date1': date1,
+            'date2': date2,
+            'duration': duration,
+            'fio': str(sheet.cell(row=2, column=1).value) + ' ' + str(sheet.cell(row=2, column=2).value) + ' ' +
+                   str(sheet.cell(row=2, column=3).value)
+        }
+        doc = DocxTemplate(pattern_path / pattern_name)
+        doc.render(context)
+        doc.save("TEST_DIPLOMA.docx")
+        shutil.move("TEST_DIPLOMA.docx", "diplomas")
+        self.progressBar.setValue(50)
+        # CREATE PDF
+        docx_list = os.listdir("diplomas")
+        os.chdir("diplomas")
+        word = comtypes.client.CreateObject('Word.Application')
+        print(os.path.abspath(docx_list[0]))
+        doc = word.Documents.Open(os.path.abspath(docx_list[0]))
+        print(os.getcwd())
+        print("Create TEST diploma")
+        doc.SaveAs(os.getcwd() + '\\TEST_DIPLOMA.pdf', FileFormat=wdFormatPDF)
+        doc.Close()
+        word.Quit()
+        self.progressBar.setValue(100)
+        os.chdir("..")
 
     def browse_folder(self):
         file_name = QtWidgets.QFileDialog.getOpenFileName(self, "Выбор шаблона", None, "word (*.doc *.docx)")[0]
         self.label_5.setText(file_name)
 
     def start_generation(self):
-        template = str(self.comboBox.currentText())
-        group_list = str(self.comboBox_2.currentText())
         # --- radio button --- #
-        if self.radioButton.isChecked():
-            print('Базовая группа')
-        elif self.radioButton_2.isChecked():
-            print('Проектная группа')
-        elif self.radioButton_3.isChecked():
-            print('Свой шаблон')
-        # --- checkBox --- #
-        if self.checkBox_2.isChecked():
-            print('Сохранить в один файл')
-        if self.checkBox_3.isChecked():
-            print('Дата начала и окончания')
+        # if self.radioButton.isChecked():
+        #     print('Базовая группа')
+        # elif self.radioButton_2.isChecked():
+        #     print('Проектная группа')
+        # elif self.radioButton_3.isChecked():
+        #     print('Свой шаблон')
+        # # --- checkBox --- #
+        # if self.checkBox_2.isChecked():
+        #     print('Сохранить в один файл')
+        # if self.checkBox_3.isChecked():
+        #     print('Дата начала и окончания')
 
         self.label_5.setText("Готовим Docx...")
+        template = str(self.comboBox.currentText())
+        group_list = str(self.comboBox_2.currentText())
         lists_path = Path('user_lists')
         pattern_path = Path('learn_templates')
         shutil.rmtree("diplomas", ignore_errors=True)
@@ -144,32 +183,38 @@ class ExampleApp(QtWidgets.QMainWindow, gui4.Ui_MainWindow):
         loading = 0  # значение для индикации загрузки
         wb = openpyxl.load_workbook(lists_path / group_list)
         sheet = wb.active
-        rows = sheet.max_row
+        rows = sheet.max_row    # количество строк
         step = 100 / rows  # вычисление шага преодразования одного документа для индикации
-        # (первая строка из документа Excel)
         pattern_name = template  # название шаблона
-        date1 = self.dateEdit.date().toString('dd.MM.yyyy')     # дата начала
-        date2 = self.dateEdit_2.date().toString('dd.MM.yyyy')   # и окончания обучения
-        duration = self.lineEdit.text()     # продолжительнсть учебной программы
+        date1 = self.dateEdit_2.date().toString('dd.MM.yyyy')  # дата начала
+        date2 = self.dateEdit.date().toString('dd.MM.yyyy')  # и окончания обучения
+        duration = self.lineEdit.text()  # продолжительнсть учебной программы
         for row_num in range(2, rows + 1):
-            context = {'kvant': str(sheet.cell(row=1, column=1).value), 'date1': date1, 'date2': date2, 'duration': duration}
-            fio = str(sheet.cell(row=row_num, column=1).value) + ' ' + str(sheet.cell(row=row_num, column=2).value) + ' ' + str(sheet.cell(row=row_num, column=3).value)
+            self.progressBar.setValue(int(loading))
+            context = {
+                'kvant': str(sheet.cell(row=1, column=1).value),
+                'date1': date1,
+                'date2': date2,
+                'duration': duration
+            }
+            fio = str(sheet.cell(row=row_num, column=1).value) + ' ' \
+                  + str(sheet.cell(row=row_num, column=2).value) + ' ' \
+                  + str(sheet.cell(row=row_num, column=3).value)
             context.setdefault('fio', fio)
             loading += step
             doc = DocxTemplate(pattern_path / pattern_name)
             doc.render(context)
             name_document = fio + '_' + str(i) + ".docx"
+            i += 1
             doc.save(name_document)
             shutil.move(name_document, "diplomas")
-            i += 1
-            self.progressBar.setValue(int(loading))
         self.progressBar.setValue(100)
 
-        if self.checkBox.isChecked():  # если выбран пункт сохранить в формате pdf,
-            # то все документы docx из папки diplomas переконвертируются в pdf
-            self.label_5.setText("Готовим PDF...")
-            # convert("diplomas/")
-            # self.label_5.setText("Свежие PDF готовы!)")
+        # if self.checkBox.isChecked():  # если выбран пункт сохранить в формате pdf,
+        # то все документы docx из папки diplomas переконвертируются в pdf
+        # self.label_5.setText("Готовим PDF...")
+        # convert("diplomas/")
+        # self.label_5.setText("Свежие PDF готовы!)")
 
 
 def main():
